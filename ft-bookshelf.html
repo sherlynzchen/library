@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>FT Business Book of the Year — The Shelf</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=EB+Garamond:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: linear-gradient(160deg, #1a1208 0%, #2d1f0a 40%, #1c1408 100%);
+      font-family: 'EB Garamond', Georgia, serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 24px 80px;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    .ambient {
+      position: fixed; top: 0; left: 50%; transform: translateX(-50%);
+      width: 700px; height: 350px; border-radius: 50%;
+      background: radial-gradient(ellipse, rgba(255,160,30,0.07) 0%, transparent 70%);
+      pointer-events: none; z-index: 0;
+    }
+
+    /* ── Header ── */
+    .header { text-align: center; margin-bottom: 52px; position: relative; z-index: 1; }
+    .header .kicker {
+      color: #c9963a; font-size: 10px; letter-spacing: 6px;
+      text-transform: uppercase; margin-bottom: 10px;
+      font-family: 'EB Garamond', serif;
+    }
+    .header h1 {
+      color: #f5e0b0;
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(24px, 4.5vw, 44px);
+      font-weight: 400; font-style: italic; letter-spacing: 1px;
+      text-shadow: 0 2px 24px rgba(240,180,60,0.18);
+    }
+    .header .sub {
+      color: #7a6035; font-size: 12px; letter-spacing: 2px;
+      text-transform: uppercase; margin-top: 10px;
+      font-family: 'EB Garamond', serif;
+    }
+    .header .rule {
+      width: 70px; height: 1px;
+      background: linear-gradient(90deg, transparent, #9a7a42, transparent);
+      margin: 14px auto 0;
+    }
+
+    /* ── Shelf Unit ── */
+    .shelf-unit {
+      width: 100%; max-width: 980px;
+      background: linear-gradient(180deg, #3a2208 0%, #271807 100%);
+      border-radius: 6px;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.85), inset 0 1px 0 rgba(255,200,100,0.08);
+      padding: 36px 36px 0;
+      position: relative;
+      border: 1px solid rgba(130,80,30,0.3);
+      z-index: 1;
+    }
+    .shelf-unit::before {
+      content: '';
+      position: absolute; inset: 0; border-radius: 6px;
+      background: repeating-linear-gradient(90deg, transparent, transparent 60px,
+        rgba(0,0,0,0.05) 60px, rgba(0,0,0,0.05) 61px);
+      pointer-events: none;
+    }
+
+    /* ── Books Row ── */
+    .books-row {
+      display: flex; align-items: flex-end; gap: 4px;
+      padding: 0 6px; min-height: 210px; position: relative;
+      flex-wrap: nowrap; overflow-x: auto;
+    }
+    .books-row::-webkit-scrollbar { height: 4px; }
+    .books-row::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); }
+    .books-row::-webkit-scrollbar-thumb { background: #6b4c1f; border-radius: 2px; }
+
+    /* ── Individual Book ── */
+    .book {
+      flex-shrink: 0;
+      width: 62px;
+      height: 185px;
+      border-radius: 2px 4px 0 0;
+      cursor: pointer;
+      position: relative;
+      transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1),
+                  box-shadow 0.28s ease,
+                  height 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+      box-shadow: 3px 0 8px rgba(0,0,0,0.55), -1px 0 3px rgba(0,0,0,0.3);
+      overflow: hidden;
+      background: #3a2a1a;
+    }
+    .book:hover {
+      transform: translateY(-14px);
+      box-shadow: 5px 0 18px rgba(0,0,0,0.7), -1px 0 4px rgba(0,0,0,0.4);
+    }
+    .book.active {
+      transform: translateY(-22px) scale(1.05);
+      box-shadow: 6px 0 24px rgba(0,0,0,0.8), -2px 0 8px rgba(0,0,0,0.5),
+                  0 -6px 24px rgba(255,190,80,0.2);
+    }
+
+    /* Book cover image */
+    .book-cover-img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      display: block;
+      position: absolute; inset: 0;
+    }
+
+    /* Fallback spine (shown when no image or as overlay) */
+    .book-spine-fallback {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+    }
+    .spine-accent { height: 4px; width: 100%; position: absolute; top: 0; }
+    .spine-accent-bottom { height: 3px; width: 100%; position: absolute; bottom: 0; opacity: 0.6; }
+    .spine-title {
+      font-size: 8.5px; font-weight: bold; letter-spacing: 1.2px;
+      text-transform: uppercase;
+      writing-mode: vertical-rl; text-orientation: mixed;
+      transform: rotate(180deg);
+      max-height: 145px; overflow: hidden;
+      white-space: nowrap; text-overflow: ellipsis;
+      opacity: 0.95; text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+      padding: 4px; font-family: 'EB Garamond', serif;
+    }
+    /* Year badge on active */
+    .year-badge {
+      position: absolute; bottom: 6px; left: 50%;
+      transform: translateX(-50%);
+      font-size: 8px; letter-spacing: 1px;
+      font-family: 'Playfair Display', serif;
+      font-style: italic; opacity: 0.85;
+      white-space: nowrap;
+      z-index: 2;
+    }
+
+    /* Bookend */
+    .bookend {
+      width: 20px; height: 150px; margin-left: 4px;
+      align-self: flex-end; flex-shrink: 0;
+      background: linear-gradient(180deg, #5a3a1a, #3d2408);
+      border-radius: 0 4px 0 0;
+      box-shadow: 2px 0 6px rgba(0,0,0,0.45);
+    }
+
+    /* Shelf plank */
+    .shelf-plank {
+      height: 24px;
+      background: linear-gradient(180deg, #5c3c1a 0%, #3e2712 50%, #2c1c08 100%);
+      border-radius: 0 0 5px 5px; position: relative;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.75);
+      border-top: 2px solid rgba(170,110,40,0.35);
+    }
+    .shelf-plank::before {
+      content: ''; position: absolute; inset: 0; border-radius: 0 0 5px 5px;
+      background: repeating-linear-gradient(90deg, transparent, transparent 50px,
+        rgba(0,0,0,0.06) 50px, rgba(0,0,0,0.06) 51px);
+    }
+
+    /* Hint */
+    .hint {
+      color: #6b5230; font-size: 11px; letter-spacing: 2.5px;
+      text-transform: uppercase; margin-top: 24px;
+      animation: pulse 2.5s ease-in-out infinite;
+      z-index: 1; position: relative;
+    }
+
+    /* ── Detail Panel ── */
+    #detail-panel {
+      display: none; width: 100%; max-width: 980px;
+      margin-top: 36px;
+      background: linear-gradient(135deg, #fdf8ef 0%, #f4e8d0 100%);
+      border-radius: 10px;
+      box-shadow: 0 24px 70px rgba(0,0,0,0.75), 0 0 0 1px rgba(130,80,30,0.2);
+      overflow: hidden; position: relative; z-index: 2;
+    }
+    #detail-panel.visible {
+      display: flex;
+      animation: slideUp 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    /* Left panel: cover art */
+    .panel-cover {
+      width: 240px; flex-shrink: 0;
+      position: relative; overflow: hidden;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: flex-end;
+      padding: 28px 20px 24px;
+      min-height: 360px;
+    }
+    .panel-cover-bg {
+      position: absolute; inset: 0;
+      background-size: cover; background-position: center;
+      filter: blur(18px) brightness(0.45) saturate(1.2);
+      transform: scale(1.12);
+    }
+    .panel-cover-img {
+      position: relative; z-index: 1;
+      width: 140px; height: 210px;
+      object-fit: cover; border-radius: 3px;
+      box-shadow: 6px 6px 24px rgba(0,0,0,0.7), -2px -2px 10px rgba(0,0,0,0.3);
+    }
+    .panel-cover-fallback {
+      position: relative; z-index: 1;
+      width: 140px; height: 210px; border-radius: 3px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 14px; text-align: center;
+      box-shadow: 6px 6px 24px rgba(0,0,0,0.7);
+    }
+    .panel-cover-fallback .fc-bar { height: 3px; width: 36px; margin-bottom: 12px; }
+    .panel-cover-fallback .fc-title {
+      font-size: 9.5px; font-weight: bold; letter-spacing: 0.8px;
+      text-transform: uppercase; line-height: 1.4; margin-bottom: 10px;
+      font-family: 'EB Garamond', serif;
+    }
+    .panel-cover-fallback .fc-bar2 { height: 1px; width: 20px; margin: 4px 0; opacity: 0.5; }
+    .panel-cover-fallback .fc-author {
+      font-size: 8px; font-style: italic; letter-spacing: 0.4px; margin-top: 6px;
+      font-family: 'EB Garamond', serif;
+    }
+    .ft-badge {
+      position: relative; z-index: 1; margin-top: 14px;
+      background: rgba(0,0,0,0.55); border: 1px solid rgba(255,190,80,0.3);
+      border-radius: 3px; padding: 5px 10px; text-align: center;
+    }
+    .ft-badge .ft-label {
+      color: #e8c06a; font-size: 8px; letter-spacing: 3px;
+      text-transform: uppercase; display: block;
+      font-family: 'EB Garamond', serif;
+    }
+    .ft-badge .ft-year {
+      color: #fff; font-size: 18px; font-style: italic;
+      font-family: 'Playfair Display', serif; display: block; line-height: 1.2;
+    }
+
+    /* Right panel: text */
+    .panel-text { padding: 36px 40px; flex: 1; overflow-y: auto; max-height: 480px; }
+    .panel-text::-webkit-scrollbar { width: 4px; }
+    .panel-text::-webkit-scrollbar-thumb { background: #c9963a; border-radius: 2px; }
+
+    .pt-meta { color: #9a7a42; font-size: 10px; letter-spacing: 4px; text-transform: uppercase; margin-bottom: 8px; font-family: 'EB Garamond', serif; }
+    .pt-title { color: #2a1605; font-family: 'Playfair Display', serif; font-size: clamp(18px, 2.5vw, 26px); font-weight: 400; font-style: italic; line-height: 1.3; margin-bottom: 6px; }
+    .pt-award {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: linear-gradient(90deg, #c9963a22, #c9963a11);
+      border: 1px solid #c9963a55; border-radius: 3px;
+      padding: 4px 10px; margin: 12px 0 20px;
+    }
+    .pt-award .trophy { font-size: 13px; }
+    .pt-award span { color: #8a6230; font-size: 10px; letter-spacing: 2px; text-transform: uppercase; font-family: 'EB Garamond', serif; }
+    .pt-divider { height: 1px; background: linear-gradient(90deg, #d4b896, transparent); margin-bottom: 20px; }
+    .pt-summary { color: #4a3218; font-size: 15px; line-height: 1.85; margin-bottom: 26px; font-family: 'EB Garamond', serif; }
+    .pt-insights-label { color: #9a7a42; font-size: 10px; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 14px; font-family: 'EB Garamond', serif; }
+    .insights-list { list-style: none; }
+    .insights-list li {
+      display: flex; gap: 12px; align-items: flex-start;
+      margin-bottom: 11px; color: #3d2810; font-size: 14px; line-height: 1.65;
+      font-family: 'EB Garamond', serif;
+    }
+    .insights-list li .gem { font-size: 14px; line-height: 1.5; flex-shrink: 0; }
+
+    /* Close */
+    .close-btn {
+      position: absolute; top: 14px; right: 14px; z-index: 10;
+      background: rgba(0,0,0,0.12); border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 50%; width: 32px; height: 32px; cursor: pointer;
+      color: #7a5a30; font-size: 20px; font-family: serif;
+      display: flex; align-items: center; justify-content: center; line-height: 1;
+      transition: background 0.2s;
+    }
+    .close-btn:hover { background: rgba(0,0,0,0.2); }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.35; } 50% { opacity: 0.85; }
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(22px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 640px) {
+      #detail-panel.visible { flex-direction: column; }
+      .panel-cover { width: 100%; min-height: 220px; flex-direction: row; gap: 20px; padding: 20px; justify-content: center; align-items: center; }
+      .panel-cover-img, .panel-cover-fallback { width: 100px; height: 150px; }
+      .panel-text { padding: 24px 20px; max-height: none; }
+      .books-row { gap: 3px; }
+      .book { width: 50px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="ambient"></div>
+
+<div class="header">
+  <p class="kicker">Financial Times</p>
+  <h1>Business Book of the Year</h1>
+  <p class="sub">The Winners Shelf · 2015 – 2024</p>
+  <div class="rule"></div>
+</div>
+
+<div class="shelf-unit">
+  <div class="books-row" id="books-row">
+    <div class="bookend"></div>
+  </div>
+  <div class="shelf-plank"></div>
+</div>
+
+<p class="hint" id="hint">↑ click any book to open it</p>
+
+<div id="detail-panel">
+  <div class="panel-cover" id="panel-cover">
+    <div class="panel-cover-bg" id="panel-cover-bg"></div>
+    <img class="panel-cover-img" id="panel-cover-img" src="" alt="" onerror="this.style.display='none'; document.getElementById('panel-cover-fallback').style.display='flex'"/>
+    <div class="panel-cover-fallback" id="panel-cover-fallback" style="display:none">
+      <div class="fc-bar" id="fc-bar"></div>
+      <p class="fc-title" id="fc-title"></p>
+      <div class="fc-bar2" id="fc-bar2"></div>
+      <p class="fc-author" id="fc-author"></p>
+    </div>
+    <div class="ft-badge">
+      <span class="ft-label">FT Book of the Year</span>
+      <span class="ft-year" id="ft-year"></span>
+    </div>
+  </div>
+  <div class="panel-text">
+    <p class="pt-meta" id="pt-meta"></p>
+    <h2 class="pt-title" id="pt-title"></h2>
+    <div class="pt-award">
+      <span class="trophy">🏆</span>
+      <span id="pt-award-text"></span>
+    </div>
+    <div class="pt-divider"></div>
+    <p class="pt-summary" id="pt-summary"></p>
+    <p class="pt-insights-label">Key Insights</p>
+    <ul class="insights-list" id="insights-list"></ul>
+  </div>
+  <button class="close-btn" id="close-btn">×</button>
+</div>
+
+<script>
+const books = [
+  {
+    id: 1, year: 2015,
+    title: "Rise of the Robots",
+    author: "Martin Ford",
+    isbn: "9780465059997",
+    spine: { bg: "#1a2e4a", text: "#e0eaf5", accent: "#4a9fd4" },
+    summary: "Ford argues that accelerating advances in automation and artificial intelligence will soon render vast swaths of human employment obsolete. Unlike past technological revolutions, this wave threatens to devastate the middle class and widen inequality unless societies take radical action — including rethinking income distribution itself.",
+    insights: [
+      "Robots and AI are moving beyond routine tasks into creative and cognitive work",
+      "Traditional job creation from innovation will not keep pace with displacement",
+      "A guaranteed basic income may become a necessary policy response",
+      "Higher education and professional credentials offer diminishing protection from automation"
+    ]
+  },
+  {
+    id: 2, year: 2016,
+    title: "The Man Who Knew",
+    author: "Sebastian Mallaby",
+    isbn: "9781594204098",
+    spine: { bg: "#2e2010", text: "#f5e8cc", accent: "#c8902a" },
+    summary: "A definitive biography of Alan Greenspan, chairman of the Federal Reserve for nearly two decades. Mallaby shows how a libertarian intellectual became the world's most powerful economic technocrat — and how his faith in self-regulating markets, despite his own private doubts, contributed to the 2008 financial crisis.",
+    insights: [
+      "Greenspan privately acknowledged market failures he refused to act upon publicly",
+      "The cult of the all-knowing central banker is inherently dangerous",
+      "Financial deregulation in the 1990s sowed the seeds of the 2008 crash",
+      "Ideology can corrupt even the most technically sophisticated policymakers"
+    ]
+  },
+  {
+    id: 3, year: 2017,
+    title: "Janesville",
+    author: "Amy Goldstein",
+    isbn: "9781501102264",
+    spine: { bg: "#3b2215", text: "#f0e0cc", accent: "#d97c3a" },
+    summary: "An intimate chronicle of Janesville, Wisconsin, after General Motors shuttered its auto plant in 2008. Goldstein spent years documenting what happened to workers, families, and institutions — revealing how retraining programs often fail, how the safety net frays, and how economic disruption reshapes entire communities for generations.",
+    insights: [
+      "Retraining programs rarely restore workers to their pre-layoff income levels",
+      "Community dislocation ripples across health, education, and social trust",
+      "The pain of deindustrialisation is political as well as economic",
+      "Policy responses to job loss often reflect ideology over evidence"
+    ]
+  },
+  {
+    id: 4, year: 2018,
+    title: "Bad Blood",
+    author: "John Carreyrou",
+    isbn: "9781524731656",
+    spine: { bg: "#6b0f0f", text: "#fde8e8", accent: "#e84040" },
+    summary: "The explosive exposé of Theranos, the Silicon Valley blood-testing startup that defrauded investors, patients, and partners for years. Carreyrou reveals how Elizabeth Holmes weaponised secrecy, charisma, and a culture of fear to build a $9 billion company on a lie — and what it says about the hubris of the tech industry.",
+    insights: [
+      "Charisma and story-telling can substitute for product reality far longer than expected",
+      "Boards and investors failed by not demanding basic scientific verification",
+      "Disruption ideology can silence legitimate safety and ethical concerns",
+      "Whistleblowers face enormous personal risk to expose corporate wrongdoing"
+    ]
+  },
+  {
+    id: 5, year: 2019,
+    title: "Invisible Women",
+    author: "Caroline Criado Perez",
+    isbn: "9781419732553",
+    spine: { bg: "#8b1a5a", text: "#fce8f0", accent: "#e86aaa" },
+    summary: "Criado Perez exposes the gender data gap — the systematic exclusion of women's lives from the data that shapes medicine, urban planning, workplace design, and public policy. From crash-test dummies to voice recognition software, a world built for men by default is silently harming women every day.",
+    insights: [
+      "Medical research conducted primarily on male subjects produces care that fails women",
+      "Cities, transport and public spaces are designed around male default patterns",
+      "Data gaps are not neutral — their costs fall disproportionately on women",
+      "Including women in research and design is not a nicety but a life-or-death necessity"
+    ]
+  },
+  {
+    id: 6, year: 2020,
+    title: "No Filter",
+    author: "Sarah Frier",
+    isbn: "9781982126803",
+    spine: { bg: "#2c1a3e", text: "#f0e8fc", accent: "#c07aec" },
+    summary: "The inside story of Instagram's rise from a scrappy startup to a cultural empire with over a billion users. Frier traces how founders Kevin Systrom and Mike Krieger built a platform that transformed celebrity, beauty, and commerce — and the brutal power struggle when Facebook acquired it and eventually forced them out.",
+    insights: [
+      "Instagram redefined aspiration, beauty standards and influencer culture at global scale",
+      "Facebook systematically undermined Instagram's independence after acquisition",
+      "Platform power can override founders' values and product vision",
+      "The attention economy has deep psychological and social consequences for users"
+    ]
+  },
+  {
+    id: 7, year: 2021,
+    title: "This Is How They Tell Me the World Ends",
+    author: "Nicole Perlroth",
+    isbn: "9781635576054",
+    spine: { bg: "#0a1a2e", text: "#d0e8f5", accent: "#2a8fd0" },
+    summary: "A gripping investigation into the global cyberweapons arms race. Perlroth reveals the shadowy market for zero-day vulnerabilities — the secret software flaws that governments buy and hoard to use as digital weapons — and how America's own offensive tools have been turned against it, with potentially catastrophic consequences.",
+    insights: [
+      "Governments stockpile software vulnerabilities rather than patching them, creating systemic risk",
+      "The NSA's offensive tools have leaked and armed adversaries",
+      "Private brokers profit enormously from a largely unregulated cyberweapons market",
+      "Critical infrastructure — hospitals, power grids, pipelines — is dangerously exposed"
+    ]
+  },
+  {
+    id: 8, year: 2022,
+    title: "Chip War",
+    author: "Chris Miller",
+    isbn: "9781982172008",
+    spine: { bg: "#0d2b1a", text: "#d0f0e0", accent: "#3abd74" },
+    summary: "The definitive history of the semiconductor industry and why microchips have become the central battleground of geopolitics. Miller traces how a generation of American engineers built a global supply chain of unmatched complexity — and why control of chip production now determines economic and military supremacy in the 21st century.",
+    insights: [
+      "Semiconductors are the oil of the modern economy — everything depends on them",
+      "Taiwan's TSMC has an extraordinary and precarious monopoly on leading-edge chips",
+      "The US–China rivalry is fundamentally a competition over semiconductor supremacy",
+      "Decades of offshoring have left Western nations dangerously dependent on Asian fabs"
+    ]
+  },
+  {
+    id: 9, year: 2023,
+    title: "Right Kind of Wrong",
+    author: "Amy Edmondson",
+    isbn: "9781982195069",
+    spine: { bg: "#1e3a1e", text: "#e0f0e0", accent: "#5ab85a" },
+    summary: "Harvard Business School professor Amy Edmondson reframes our relationship with failure. Not all failure is equal: some failure is intelligent, arising from thoughtful experiments in uncertain terrain. Edmondson provides a science-based framework for distinguishing productive from wasteful failure — and for building organisations that can learn from both.",
+    insights: [
+      "Intelligent failure happens at the frontier of knowledge and should be celebrated",
+      "Psychological safety is the precondition for teams to learn from mistakes",
+      "\"Fail fast\" mantras are often misapplied — quality of failure matters, not just speed",
+      "Leaders who model vulnerability and admit errors create more resilient organisations"
+    ]
+  },
+  {
+    id: 10, year: 2024,
+    title: "Supremacy",
+    author: "Parmy Olson",
+    isbn: "9781250337689",
+    spine: { bg: "#10101e", text: "#d0d8f8", accent: "#6070f0" },
+    summary: "The behind-the-scenes story of the rivalry between OpenAI and Google DeepMind — and the two men at their centre: Sam Altman and Demis Hassabis. Olson reveals how idealistic researchers who wanted AI to benefit humanity became swept up in a race for dominance, profit, and power that may define the fate of civilisation.",
+    insights: [
+      "The AI arms race has transformed safety-focused labs into commercially driven competitors",
+      "Personal ambition and corporate incentives routinely override stated ethical commitments",
+      "Microsoft's investment reshaped OpenAI from a nonprofit ideal into a commercial juggernaut",
+      "The question of who controls transformative AI is ultimately a question about political power"
+    ]
+  }
+];
+
+// Open Library cover URL (by ISBN)
+function coverUrl(isbn, size='L') {
+  return `https://covers.openlibrary.org/b/isbn/${isbn}-${size}.jpg`;
+}
+
+let activeId = null;
+const booksRow = document.getElementById('books-row');
+const bookend  = booksRow.querySelector('.bookend');
+
+books.forEach(b => {
+  const div = document.createElement('div');
+  div.className = 'book';
+  div.dataset.id = b.id;
+  div.title = `${b.title} (${b.year})`;
+  div.style.background = b.spine.bg;
+
+  // Try to show cover image on spine
+  const img = document.createElement('img');
+  img.className = 'book-cover-img';
+  img.src = coverUrl(b.isbn, 'M');
+  img.alt = b.title;
+  img.onerror = () => { img.style.display = 'none'; fallback.style.display = 'flex'; };
+
+  // Fallback spine
+  const fallback = document.createElement('div');
+  fallback.className = 'book-spine-fallback';
+  fallback.style.display = 'none';
+  fallback.innerHTML = `
+    <div class="spine-accent" style="background:${b.spine.accent}"></div>
+    <span class="spine-title" style="color:${b.spine.text}">${b.title}</span>
+    <div class="spine-accent-bottom" style="background:${b.spine.accent}"></div>
+  `;
+
+  // Year badge
+  const badge = document.createElement('div');
+  badge.className = 'year-badge';
+  badge.style.color = b.spine.accent;
+  badge.textContent = b.year;
+
+  div.appendChild(img);
+  div.appendChild(fallback);
+  div.appendChild(badge);
+  div.addEventListener('click', () => toggleBook(b));
+  booksRow.insertBefore(div, bookend);
+});
+
+function toggleBook(b) {
+  const panel = document.getElementById('detail-panel');
+  const hint  = document.getElementById('hint');
+
+  if (activeId === b.id) {
+    activeId = null;
+    panel.classList.remove('visible');
+    hint.style.display = '';
+    document.querySelectorAll('.book').forEach(el => el.classList.remove('active'));
+    return;
+  }
+  activeId = b.id;
+  hint.style.display = 'none';
+  document.querySelectorAll('.book').forEach(el =>
+    el.classList.toggle('active', parseInt(el.dataset.id) === b.id)
+  );
+
+  // Cover panel
+  const bgEl  = document.getElementById('panel-cover-bg');
+  const imgEl = document.getElementById('panel-cover-img');
+  const fbEl  = document.getElementById('panel-cover-fallback');
+  const cover = document.getElementById('panel-cover');
+
+  cover.style.setProperty('--accent', b.spine.accent);
+  bgEl.style.backgroundImage = `url(${coverUrl(b.isbn, 'L')})`;
+  imgEl.src = coverUrl(b.isbn, 'L');
+  imgEl.alt = b.title;
+  imgEl.style.display = 'block';
+  fbEl.style.display = 'none';
+
+  imgEl.onerror = () => {
+    imgEl.style.display = 'none';
+    fbEl.style.display = 'flex';
+    fbEl.style.background = b.spine.bg;
+    fbEl.style.border = `2px solid ${b.spine.accent}`;
+    document.getElementById('fc-bar').style.background = b.spine.accent;
+    document.getElementById('fc-bar2').style.background = b.spine.accent;
+    document.getElementById('fc-title').textContent = b.title;
+    document.getElementById('fc-title').style.color = b.spine.text;
+    document.getElementById('fc-author').textContent = b.author;
+    document.getElementById('fc-author').style.color = b.spine.text + 'aa';
+  };
+
+  document.getElementById('ft-year').textContent = b.year;
+
+  // Text panel
+  document.getElementById('pt-meta').textContent = `${b.year} · ${b.author}`;
+  document.getElementById('pt-title').textContent = b.title;
+  document.getElementById('pt-award-text').textContent = `FT Business Book of the Year ${b.year}`;
+
+  document.getElementById('pt-summary').textContent = b.summary;
+
+  const ul = document.getElementById('insights-list');
+  ul.innerHTML = '';
+  b.insights.forEach(ins => {
+    const li = document.createElement('li');
+    li.innerHTML = `<span class="gem" style="color:${b.spine.accent}">◆</span>${ins}`;
+    ul.appendChild(li);
+  });
+
+  // Animate in
+  panel.classList.remove('visible');
+  void panel.offsetWidth;
+  panel.classList.add('visible');
+  setTimeout(() => panel.scrollIntoView({ behavior: 'smooth', block: 'nearest' }), 60);
+}
+
+document.getElementById('close-btn').addEventListener('click', () => {
+  activeId = null;
+  document.getElementById('detail-panel').classList.remove('visible');
+  document.getElementById('hint').style.display = '';
+  document.querySelectorAll('.book').forEach(el => el.classList.remove('active'));
+});
+</script>
+</body>
+</html>
